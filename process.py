@@ -1,4 +1,5 @@
 import copy
+from collections import Counter
 
 def getVicinVals(mat,x,y,xyrange):
     width = len(mat[0])
@@ -18,9 +19,11 @@ def smooth(mat):
         simp[i] = [0]*width
     for y in range(0,height):
         for x in range(0,width):
-    	    vicinVals = getVicinVals(mat, x, y, 4)
-            # TODO pythonify the statement below
-    	    #simp[y][x] = Number(_.chain(vicinVals).countBy().toPairs().maxBy(_.last).head().value())
+            vicinVals = getVicinVals(mat, x, y, 4)
+            # Get most common value
+            #simp[y][x] = Number(_.chain(vicinVals).countBy().toPairs().maxBy(_.last).head().value())
+            val_counter = Counter(vicinVals)
+            simp[y][x] = int(val_counter.most_common(1)[0][0])
     return simp
 
 def neighborsSame(mat, x, y):
