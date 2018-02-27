@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
-def get_dom_colors(image_path,clusters=10):
+def get_dom_colors(image_path,clusters=10,plot=False):
 	image = cv2.imread(image_path)
 	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 	# flatten to 1d
@@ -15,6 +15,12 @@ def get_dom_colors(image_path,clusters=10):
 
 	dcolors = [c.astype("uint8").tolist() for c in clt.cluster_centers_]
 	print(dcolors)
+	if plot:
+		bar = plot_colors(hist, clt.cluster_centers_)
+		plt.figure()
+		plt.axis("off")
+		plt.imshow(bar)
+		plt.show()
 
 	return dcolors
 
@@ -41,7 +47,7 @@ def centroid_histogram(clt):
 
 	return hist
 
-#bar = plot_colors(hist, clt.cluster_centers_)
+# bar = plot_colors(hist, clt.cluster_centers_)
 
 # plt.figure()
 # plt.axis("off")
