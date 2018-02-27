@@ -1,4 +1,4 @@
-import copy
+from copy import deepcopy
 from collections import Counter
 
 def getVicinVals(mat,x,y,xyrange):
@@ -8,15 +8,13 @@ def getVicinVals(mat,x,y,xyrange):
     for xx in range(x-xyrange,x+xyrange+1):
         for yy in range(y-xyrange,y+xyrange+1):
 	           if xx >= 0 and xx < width and yy >= 0 and yy < height:
-		                 vicinVals.push(mat[yy][xx])
+		                 vicinVals.append(mat[yy][xx])
     return vicinVals
 
 def smooth(mat):
     width = len(mat[0])
     height = len(mat)
-    simp = []
-    for i in range(0,height):
-        simp[i] = [0]*width
+    simp = [[0]*width]*height
     for y in range(0,height):
         for x in range(0,width):
             vicinVals = getVicinVals(mat, x, y, 4)
@@ -43,9 +41,7 @@ def neighborsSame(mat, x, y):
 def outline(mat):
     width = len(mat[0])
     height = len(mat)
-    line = []
-    for i in range(0,height):
-	       line[i] = [0]*width
+    line = [[0]*width]*height
     for y in range(0,height):
         for x in range(0,width):
             line[y][x] = 0 if neighborsSame(mat, x, y) else 1
@@ -102,7 +98,9 @@ def getLabelLoc(mat, region):
 def getBelowValue(mat, region):
     x = region['x'][0]
     y = region['y'][0]
+    print(region)
     while mat[y][x] == region['value']:
+        print(mat[y][x])
         y+=1
 
     return mat[y][x]
@@ -119,9 +117,7 @@ def removeRegion(mat, region):
 def getLabelLocs(mat):
     width = len(mat[0])
     height = len(mat)
-    covered = []
-    for i in range(0,height):
-        covered[i] = [False]*width
+    covered = [[False]*width]*height
 
     labelLocs = []
     for y in range(0,height):
@@ -130,7 +126,7 @@ def getLabelLocs(mat):
                 region = getRegion(mat, covered, x, y)
                 coverRegion(covered, region)
             if len(region['x']) > 100:
-                labelLocs.push(getLabelLoc(mat, region))
+                labelLocs.append(getLabelLoc(mat, region))
             else:
                 removeRegion(mat, region)
 
@@ -140,8 +136,9 @@ def img_process(mat):
     # Smoothing edges
     matSmooth = smooth(mat)
     # Identify color regions
-    labelLocs = getLabelLocs(matSmooth)
-    # Drawing outline
-    matLine = outline(matSmooth)
+    # labelLocs = getLabelLocs(matSmooth)
+    # # Drawing outline
+    # matLine = outline(matSmooth)
 
-    return matSmooth, labelLocs, matLine
+    # return matSmooth, labelLocs, matLine
+    return matSmooth
