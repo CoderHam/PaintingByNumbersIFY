@@ -57,7 +57,7 @@ smoothened = matToImageData(mat,palette)
 
 # plt.imshow(smoothened)
 # plt.show()
-imsave("images/simpImage.jpg",smoothened)
+# imsave("images/simpImage.jpg",smoothened)
 
 # matSmooth, labelLocs, matLine = process.img_process(mat)
 matSmooth = process.img_process(mat)
