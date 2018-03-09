@@ -14,14 +14,18 @@ def getVicinVals(mat,x,y,xyrange):
 def smooth(mat):
     width = len(mat[0])
     height = len(mat)
-    simp = [[0]*width]*height
-    for y in range(0,height):
-        for x in range(0,width):
-            vicinVals = getVicinVals(mat, x, y, 4)
-            # Get most common value
-            #simp[y][x] = Number(_.chain(vicinVals).countBy().toPairs().maxBy(_.last).head().value())
-            val_counter = Counter(vicinVals)
-            simp[y][x] = int(val_counter.most_common(1)[0][0])
+    # simp = [[0]*width]*height
+    # for y in range(0,height):
+    #     for x in range(0,width):
+    #         vicinVals = getVicinVals(mat, x, y, 4)
+    #         # Get most common value
+    #         #simp[y][x] = Number(_.chain(vicinVals).countBy().toPairs().maxBy(_.last).head().value())
+    #         val_counter = Counter(vicinVals)
+    #         simp[y][x] = int(val_counter.most_common(1)[0][0])
+
+    flatSimp = [Counter(getVicinVals(mat, x, y, 4)).most_common(1)[0][0] for y in range(0,height) for x in range(0,width)]
+    simp = [flatSimp[i:i+height] for i in range(0, len(flatSimp), height)]
+
     return simp
 
 def neighborsSame(mat, x, y):
