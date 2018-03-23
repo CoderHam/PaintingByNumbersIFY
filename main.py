@@ -44,8 +44,8 @@ def matToImageData(mat, palette):
 
     return imgData
 
-img_path = "images/dancing.jpg"
-domColors = dominant_cluster.get_dom_colors(img_path,15,True)
+img_path = "images/picasso.jpg"
+domColors = dominant_cluster.get_dom_colors(img_path,20,True)
 palette = domColors
 # palette = [[25, 43, 49], [100, 111, 111], [58, 68, 65], [154, 155, 149], [85, 97, 97], [39, 62, 69], [18, 34, 40], [71, 84, 85], [148, 141, 122], [53, 74, 79], [123, 117, 101], [30, 51, 58], [43, 55, 53], [183, 181, 174], [121, 130, 130]]
 
@@ -53,16 +53,21 @@ image = cv2.imread(img_path)
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
 mat = imageDataToSimpMat(image, palette)
-smoothened = matToImageData(mat,palette)
+# smoothened = matToImageData(mat,palette)
 
 # plt.imshow(smoothened)
 # plt.show()
 # imsave("images/simpImage.jpg",smoothened)
 
 # matSmooth, labelLocs, matLine = process.img_process(mat)
-matSmooth = process.img_process(mat)
+matSmooth, matLine = process.img_process(mat)
+
+height = len(matLine)
+borderFlat = [[abs(xyVal-1.0) for ii in range(0,3)] for yVal in matLine for xyVal in yVal]
+borders = [borderFlat[i:i+height] for i in range(0, len(borderFlat), height)]
 
 PBNImage = matToImageData(matSmooth,palette)
 # plt.imshow(PBNImage)
 # plt.show()
-imsave("images/PBNImage.jpg",PBNImage)
+imsave("images/PBNImage2.jpg",PBNImage)
+imsave("images/PBNImageOutline2.jpg",borders)

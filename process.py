@@ -45,10 +45,14 @@ def neighborsSame(mat, x, y):
 def outline(mat):
     width = len(mat[0])
     height = len(mat)
-    line = [[0]*width]*height
-    for y in range(0,height):
-        for x in range(0,width):
-            line[y][x] = 0 if neighborsSame(mat, x, y) else 1
+    # line = [[0]*width]*height
+    # for y in range(0,height):
+    #     for x in range(0,width):
+    #         line[y][x] = 0 if neighborsSame(mat, x, y) else 1
+
+    lineFlat = [0 if neighborsSame(mat, x, y) else 1 for y in range(0,height) for x in range(0,width)]
+    line = [lineFlat[i:i+height] for i in range(0, len(lineFlat), height)]
+
     return line
 
 def getRegion(mat, cov, x, y):
@@ -142,7 +146,7 @@ def img_process(mat):
     # Identify color regions
     # labelLocs = getLabelLocs(matSmooth)
     # # Drawing outline
-    # matLine = outline(matSmooth)
+    matLine = outline(matSmooth)
 
     # return matSmooth, labelLocs, matLine
-    return matSmooth
+    return matSmooth, matLine
