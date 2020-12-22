@@ -7,7 +7,7 @@ from collections import Counter
 import dominant_cluster
 import process
 
-def getNearest(palette, col):
+def get_nearest(palette, col):
     nearest = 0
     nearestDistsq = 1000000
     for i in range(0,len(palette)):
@@ -24,9 +24,9 @@ def imageDataToSimpMat(imgData, palette):
     height = len(imgData)
     # for y in range(0,height):
     #     for x in range(0,width):
-    #         mat[y][x] = getNearest(palette, imgData[y][x])
+    #         mat[y][x] = get_nearest(palette, imgData[y][x])
 
-    flatMat = [getNearest(palette,xyVal) for yVal in imgData for xyVal in yVal]
+    flatMat = [get_nearest(palette,xyVal) for yVal in imgData for xyVal in yVal]
     mat = [flatMat[i:i+height] for i in range(0, len(flatMat), height)]
 
     return mat
@@ -45,15 +45,14 @@ def matToImageData(mat, palette):
     return imgData
 
 img_path = "images/picasso.jpg"
-domColors = dominant_cluster.get_dom_colors(img_path,20,True)
-palette = domColors
+palette = dominant_cluster.get_dom_colors(img_path, n_clusters=20, use_gpu=True, plot=False)
 # palette = [[25, 43, 49], [100, 111, 111], [58, 68, 65], [154, 155, 149], [85, 97, 97], [39, 62, 69], [18, 34, 40], [71, 84, 85], [148, 141, 122], [53, 74, 79], [123, 117, 101], [30, 51, 58], [43, 55, 53], [183, 181, 174], [121, 130, 130]]
 
 image = cv2.imread(img_path)
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
+print(image)
+input()
 mat = imageDataToSimpMat(image, palette)
-# smoothened = matToImageData(mat,palette)
 
 # plt.imshow(smoothened)
 # plt.show()
