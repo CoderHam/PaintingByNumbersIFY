@@ -1,32 +1,18 @@
 from copy import deepcopy
 from collections import Counter
+import numpy as np
 
-def getVicinVals(mat,x,y,xyrange):
-    width = len(mat[0])
-    height = len(mat)
-    vicinVals = []
-    for xx in range(x-xyrange,x+xyrange+1):
-        for yy in range(y-xyrange,y+xyrange+1):
-	           if xx >= 0 and xx < width and yy >= 0 and yy < height:
-		                 vicinVals.append(mat[yy][xx])
-    return vicinVals
+def get_counts_of_vicinity_values(mat, x, y, xyrange):
+    ymax, xmax = mat.shape 
+    vicinVals = mat[max(x - xyrange, 0): min(x + xyrange, xmax), max(y - xyrange, 0): min(y + xyrange, ymax)].flatten()
 
-def smooth(mat):
-    width = len(mat[0])
-    height = len(mat)
-    # simp = [[0]*width]*height
-    # for y in range(0,height):
-    #     for x in range(0,width):
-    #         vicinVals = getVicinVals(mat, x, y, 4)
-    #         # Get most common value
-    #         #simp[y][x] = Number(_.chain(vicinVals).countBy().toPairs().maxBy(_.last).head().value())
-    #         val_counter = Counter(vicinVals)
-    #         simp[y][x] = int(val_counter.most_common(1)[0][0])
+    return Counter(vicinVals).most_common(1)[0][0]
 
-    flatSimp = [Counter(getVicinVals(mat, x, y, 4)).most_common(1)[0][0] for y in range(0,height) for x in range(0,width)]
-    simp = [flatSimp[i:i+height] for i in range(0, len(flatSimp), height)]
+def smoothen(mat):
+    ymax, xmax = mat.shape 
+    flat_mat = np.array([get_counts_of_vicinity_values(mat, x, y, 4) for x in range(0, xmax) for y in range(0, ymax)])
 
-    return simp
+    return flat_mat.reshape(mat.shape)
 
 def neighborsSame(mat, x, y):
     width = len(mat[0])
@@ -38,22 +24,15 @@ def neighborsSame(mat, x, y):
         xx = x + xRel[i]
         yy = y + yRel[i]
         if xx >= 0 and xx < width and yy >= 0 and yy < height:
-            if mat[yy][xx]!=val :
+            if mat[yy][xx] != val :
                 return False
     return True
 
 def outline(mat):
-    width = len(mat[0])
-    height = len(mat)
-    # line = [[0]*width]*height
-    # for y in range(0,height):
-    #     for x in range(0,width):
-    #         line[y][x] = 0 if neighborsSame(mat, x, y) else 1
+    ymax, xmax = mat.shape
+    line_mat = np.array([0 if neighborsSame(mat, x, y) else 1 for y in range(0, ymax) for x in range(0, xmax)], dtype=np.uint8)
 
-    lineFlat = [0 if neighborsSame(mat, x, y) else 1 for y in range(0,height) for x in range(0,width)]
-    line = [lineFlat[i:i+height] for i in range(0, len(lineFlat), height)]
-
-    return line
+    return line_mat.reshape(mat.shape)
 
 def getRegion(mat, cov, x, y):
     covered = deepcopy(cov)
@@ -141,12 +120,13 @@ def getLabelLocs(mat):
     return labelLocs
 
 def img_process(mat):
-    # Smoothing edges
-    matSmooth = smooth(mat)
-    # Identify color regions
-    # labelLocs = getLabelLocs(matSmooth)
-    # # Drawing outline
-    matLine = outline(matSmooth)
 
-    # return matSmooth, labelLocs, matLine
-    return matSmooth, matLine
+    # Smoothen image 
+    smooth_mat = smoothen(mat)
+
+    # Identify color regions
+    # labelLocs = getLabelLocs(smooth_mat)
+    # Drawing outline
+    line_mat = outline(smooth_mat)
+
+    return smooth_mat, line_mat
