@@ -3,6 +3,7 @@ import numpy as np
 from skimage import io, transform
 import cv2
 
+
 def load_image(img_path, resize=False):
     tmp_img = io.imread(img_path)
     if resize:
@@ -11,7 +12,7 @@ def load_image(img_path, resize=False):
 
 
 def bar_colors(centroid_size_tuples):
-	bar = np.zeros((50, 300, 3), dtype = "uint8")
+	bar = np.zeros((50, 300, 3), dtype="uint8")
 	x_start = 0
 	for (color, percent) in centroid_size_tuples:
 		x_end = x_start + (percent * 300)
