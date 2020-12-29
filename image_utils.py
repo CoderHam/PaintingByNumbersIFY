@@ -5,10 +5,10 @@ import cv2
 
 
 def load_image(img_path, resize=False):
-    tmp_img = io.imread(img_path)
-    if resize:
-        return transform.resize(image=tmp_img,output_shape=(200,200),anti_aliasing=True, mode='constant')
-    return tmp_img
+	tmp_img = io.imread(img_path)
+	if resize:
+		return transform.resize(image=tmp_img, output_shape=(200,200), anti_aliasing=True, mode='constant')
+	return tmp_img
 
 
 def bar_colors(centroid_size_tuples):
@@ -23,6 +23,6 @@ def bar_colors(centroid_size_tuples):
 
 
 def save_plot(plot, image_path):
-    io.imsave(image_path, plot)
+	io.imsave(image_path, plot)
 
 
