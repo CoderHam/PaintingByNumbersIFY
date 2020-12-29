@@ -1,10 +1,10 @@
 #! /usr/bin/env python3
 import faiss
 from sklearn.cluster import KMeans
-import image_utils
-
 import numpy as np
 from collections import Counter
+
+import image_utils
 
 def kmeans_faiss(dataset, k):
     "Runs KMeans on GPU/s"

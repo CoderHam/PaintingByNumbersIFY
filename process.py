@@ -2,16 +2,17 @@ from copy import deepcopy
 from collections import Counter
 import numpy as np
 
-def get_counts_of_vicinity_values(mat, x, y, xyrange):
+def get_most_frequent_vicinity_value(mat, x, y, xyrange):
     ymax, xmax = mat.shape
-    vicinVals = mat[max(y - xyrange, 0):min(y + xyrange, ymax),
+    vicinity_values = mat[max(y - xyrange, 0):min(y + xyrange, ymax),
                     max(x - xyrange, 0):min(x + xyrange, xmax)].flatten()
+    counts = np.bincount(vicinity_values)
 
-    return Counter(vicinVals).most_common(1)[0][0]
+    return np.argmax(counts)
 
 def smoothen(mat):
     ymax, xmax = mat.shape
-    flat_mat = np.array([get_counts_of_vicinity_values(mat, x, y, 4) for y in range(0, ymax) for x in range(0, xmax)])
+    flat_mat = np.array([get_most_frequent_vicinity_value(mat, x, y, 4) for y in range(0, ymax) for x in range(0, xmax)])
 
     return flat_mat.reshape(mat.shape)
 
