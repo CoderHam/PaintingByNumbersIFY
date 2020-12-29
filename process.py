@@ -3,18 +3,19 @@ from collections import Counter
 import numpy as np
 
 def get_counts_of_vicinity_values(mat, x, y, xyrange):
-    ymax, xmax = mat.shape 
-    vicinVals = mat[max(x - xyrange, 0): min(x + xyrange, xmax), max(y - xyrange, 0): min(y + xyrange, ymax)].flatten()
+    ymax, xmax = mat.shape
+    vicinVals = mat[max(y - xyrange, 0):min(y + xyrange, ymax),
+                    max(x - xyrange, 0):min(x + xyrange, xmax)].flatten()
 
     return Counter(vicinVals).most_common(1)[0][0]
 
 def smoothen(mat):
-    ymax, xmax = mat.shape 
-    flat_mat = np.array([get_counts_of_vicinity_values(mat, x, y, 4) for x in range(0, xmax) for y in range(0, ymax)])
+    ymax, xmax = mat.shape
+    flat_mat = np.array([get_counts_of_vicinity_values(mat, x, y, 4) for y in range(0, ymax) for x in range(0, xmax)])
 
     return flat_mat.reshape(mat.shape)
 
-def neighborsSame(mat, x, y):
+def are_neighbors_same(mat, x, y):
     width = len(mat[0])
     height = len(mat)
     val = mat[y][x]
@@ -30,7 +31,7 @@ def neighborsSame(mat, x, y):
 
 def outline(mat):
     ymax, xmax = mat.shape
-    line_mat = np.array([0 if neighborsSame(mat, x, y) else 1 for y in range(0, ymax) for x in range(0, xmax)], dtype=np.uint8)
+    line_mat = np.array([255 if are_neighbors_same(mat, x, y) else 0 for y in range(0, ymax) for x in range(0, xmax)], dtype=np.uint8)
 
     return line_mat.reshape(mat.shape)
 
@@ -41,8 +42,8 @@ def getRegion(mat, cov, x, y):
 
     queue = [[x, y]]
     while (len(queue) > 0):
-    	coord = queue.pop()
-    	if covered[coord[1]][coord[0]] == False and mat[coord[1]][coord[0]] == value:
+        coord = queue.pop()
+        if covered[coord[1]][coord[0]] == False and mat[coord[1]][coord[0]] == value:
             region['x'].append(coord[0])
             region['y'].append(coord[1])
             covered[coord[1]][coord[0]] = True
@@ -59,15 +60,15 @@ def getRegion(mat, cov, x, y):
 
 def coverRegion(covered, region):
     for i in range(0,len(region['x'])):
-	       covered[region['y'][i]][region['x'][i]] = True
+        covered[region['y'][i]][region['x'][i]] = True
 
 def sameCount(mat, x, y, incX, incY):
     value = mat[y][x]
     count = -1
     while x >= 0 and x < len(mat[0]) and y >= 0 and y < len(mat) and mat[y][x] == value:
-    	count+=1
-    	x += incX
-    	y += incY
+        count+=1
+        x += incX
+        y += incY
 
     return count
 
@@ -75,8 +76,8 @@ def getLabelLoc(mat, region):
     bestI = 0
     best = 0
     for i in range(0,len(region['x'])):
-    	goodness = sameCount(mat, region['x'][i], region['y'][i], -1, 0) * sameCount(mat, region['x'][i], region['y'][i], 1, 0) * sameCount(mat, region['x'][i], region['y'][i], 0, -1) * sameCount(mat, region['x'][i], region['y'][i], 0, 1)
-    	if goodness > best:
+        goodness = sameCount(mat, region['x'][i], region['y'][i], -1, 0) * sameCount(mat, region['x'][i], region['y'][i], 1, 0) * sameCount(mat, region['x'][i], region['y'][i], 0, -1) * sameCount(mat, region['x'][i], region['y'][i], 0, 1)
+        if goodness > best:
             best = goodness
             bestI = i
 
@@ -94,11 +95,11 @@ def getBelowValue(mat, region):
 
 def removeRegion(mat, region):
     if region['y'][0] > 0 :
-	       newValue = mat[region['y'][0] - 1][region['x'][0]]
+        newValue = mat[region['y'][0] - 1][region['x'][0]]
     else:
-	       newValue = getBelowValue(mat, region)
+        newValue = getBelowValue(mat, region)
     for i in range(0,len(region['x'])):
-	       mat[region['y'][i]][region['x'][i]] = newValue
+        mat[region['y'][i]][region['x'][i]] = newValue
 
 
 def getLabelLocs(mat):
@@ -121,11 +122,12 @@ def getLabelLocs(mat):
 
 def img_process(mat):
 
-    # Smoothen image 
+    # Smoothen image
     smooth_mat = smoothen(mat)
 
     # Identify color regions
     # labelLocs = getLabelLocs(smooth_mat)
+
     # Drawing outline
     line_mat = outline(smooth_mat)
 
