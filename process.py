@@ -1,6 +1,8 @@
+#! /usr/bin/env python3
 from copy import deepcopy
 from collections import Counter
 import numpy as np
+import cv2
 
 def get_most_frequent_vicinity_value(mat, x, y, xyrange):
     ymax, xmax = mat.shape
@@ -10,9 +12,12 @@ def get_most_frequent_vicinity_value(mat, x, y, xyrange):
 
     return np.argmax(counts)
 
-def smoothen(mat):
+def smoothen(mat, filter_size=4):
     ymax, xmax = mat.shape
-    flat_mat = np.array([get_most_frequent_vicinity_value(mat, x, y, 4) for y in range(0, ymax) for x in range(0, xmax)])
+    flat_mat = np.array([
+        get_most_frequent_vicinity_value(mat, x, y, filter_size)
+        for y in range(0, ymax) for x in range(0, xmax)
+    ])
 
     return flat_mat.reshape(mat.shape)
 
@@ -26,15 +31,15 @@ def are_neighbors_same(mat, x, y):
         xx = x + xRel[i]
         yy = y + yRel[i]
         if xx >= 0 and xx < width and yy >= 0 and yy < height:
-            if mat[yy][xx] != val :
+            if (mat[yy][xx] != val).all():
                 return False
     return True
 
 def outline(mat):
-    ymax, xmax = mat.shape
+    ymax, xmax, _ = mat.shape
     line_mat = np.array([255 if are_neighbors_same(mat, x, y) else 0 for y in range(0, ymax) for x in range(0, xmax)], dtype=np.uint8)
 
-    return line_mat.reshape(mat.shape)
+    return line_mat.reshape((ymax, xmax))
 
 def getRegion(mat, cov, x, y):
     covered = deepcopy(cov)
@@ -121,15 +126,16 @@ def getLabelLocs(mat):
 
     return labelLocs
 
-def img_process(mat):
+def edge_mask(image, line_size=3, blur_value=9):
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    gray_blur = cv2.medianBlur(gray, blur_value)
+    edges = cv2.adaptiveThreshold(gray_blur, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
+                                  cv2.THRESH_BINARY, line_size, blur_value)
 
-    # Smoothen image
-    smooth_mat = smoothen(mat)
+    return edges
 
-    # Identify color regions
-    # labelLocs = getLabelLocs(smooth_mat)
+def merge_mask(image, mask):
+    return cv2.bitwise_and(image, image, mask=mask)
 
-    # Drawing outline
-    line_mat = outline(smooth_mat)
-
-    return smooth_mat, line_mat
+def blur_image(image, blur_d=5):
+    return cv2.bilateralFilter(image, d=blur_d, sigmaColor=200, sigmaSpace=200)

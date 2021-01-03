@@ -8,41 +8,37 @@ import dominant_cluster
 import image_utils
 import process
 
-def get_nearest(palette, color):
-    return np.argmin(np.sum(((palette.astype(np.int32) - color))**2, axis=1))
-
-def image_to_simple_matrix(image, palette):
-    return np.apply_along_axis(lambda col: get_nearest(palette, col), 2, image)
-
 def simple_matrix_to_image(mat, palette):
     simple_mat_flat = np.array([[col for col in palette[index]] for index in mat.flatten()])
     return simple_mat_flat.reshape(mat.shape + (3,))
 
-def PBNify(image_path, clusters=20):
+def PBNify(image_path, clusters=20, pre_blur=True):
     image = image_utils.load_image(image_path, resize=False)
+    if pre_blur:
+        image = process.blur_image(image)
 
-    t0 = time()
     # Must pass FP32 data to get_dominant_colors since faiss does not support uint8
-    palette = dominant_cluster.get_dominant_colors(image,
+    dominant_colors, quantized_labels, _ = dominant_cluster.get_dominant_colors(image,
                                                    n_clusters=clusters,
                                                    use_gpu=True,
-                                                   plot=False)
-    print("dominant_cluster", time() - t0)
+                                                   plot=True)
+    # quantized_image = dominant_colors[quantized_labels].reshape(image.shape)
+    # image_utils.save_plot(quantized_image, "quantized.jpg")
 
-    t0 = time()
-    mat = image_to_simple_matrix(image, palette).astype(np.uint8)
-    print("image_to_simple_matrix", time() - t0)
+    smooth_labels = process.smoothen(quantized_labels.reshape(image.shape[:-1]))
+    smooth_image = dominant_colors[smooth_labels].reshape(image.shape)
+    # image_utils.save_plot(smooth_image, "smooth.jpg")
 
-    t0 = time()
-    smooth_mat, outline_image = process.img_process(mat)
-    print("process.img_process", time() - t0)
-    t0 = time()
-    pbn_image = np.array(simple_matrix_to_image(smooth_mat, palette))
-    print("simple_matrix_to_image", time() - t0)
+    edge_image = process.edge_mask(smooth_image)
+    # image_utils.save_plot(edge_image, "edge.jpg")
+
+    pbn_image = process.merge_mask(smooth_image, edge_image)
+    outline_image = process.outline(smooth_image)
 
     return pbn_image, outline_image
 
-
-pbn_image, outline_image = PBNify("images/picasso.jpg")
+t0 = time()
+pbn_image, outline_image = PBNify("images/picasso.jpg", clusters=15)
+print("PBNify: ", time() - t0, "secs")
 image_utils.save_plot(pbn_image, "images/picasso_PBN.jpg")
 image_utils.save_plot(outline_image, "images/picasso_PBNOutline.jpg")
