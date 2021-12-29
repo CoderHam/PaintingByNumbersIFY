@@ -1,5 +1,4 @@
 #! /usr/bin/env python3
-import matplotlib.pyplot as plt
 import numpy as np
 from time import time
 
@@ -19,17 +18,15 @@ def PBNify(image_path, clusters=20, pre_blur=True):
     if pre_blur:
         image = process.blur_image(image)
 
-    # Must pass FP32 data to get_dominant_colors since faiss does not support uint8
     dominant_colors, quantized_labels, bar_image = dominant_cluster.get_dominant_colors(
         image, n_clusters=clusters, use_gpu=True, plot=True)
 
+    # Create final PBN image
     smooth_labels = process.smoothen(quantized_labels.reshape(image.shape[:-1]))
-    smooth_image = dominant_colors[smooth_labels].reshape(image.shape)
+    pbn_image = dominant_colors[smooth_labels].reshape(image.shape)
 
-    edge_image = process.edge_mask(smooth_image)
-
-    pbn_image = process.merge_mask(smooth_image, edge_image)
-    outline_image = process.outline(smooth_image)
+    # Create outline image
+    outline_image = process.outline(pbn_image)
 
     return pbn_image, outline_image
 

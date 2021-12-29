@@ -46,6 +46,7 @@ def compute_cluster_assignment(centroids, data):
 
 
 def get_dominant_colors(image, n_clusters=10, use_gpu=True, plot=True):
+    # Must pass FP32 data to kmeans_faiss since faiss does not support uint8
     flat_image = image.reshape(
         (image.shape[0] * image.shape[1], 3)).astype(np.float32)
 
