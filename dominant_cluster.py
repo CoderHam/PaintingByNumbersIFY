@@ -6,13 +6,16 @@ from collections import Counter
 
 import image_utils
 
+
 def kmeans_faiss(dataset, k):
-    "Runs KMeans on GPU/s"
+    """
+    Runs KMeans on GPU"
+    """
     dims = dataset.shape[1]
     cluster = faiss.Clustering(dims, k)
     cluster.verbose = False
     cluster.niter = 20
-    cluster.max_points_per_centroid = 10 ** 7
+    cluster.max_points_per_centroid = 10**7
 
     resources = faiss.StandardGpuResources()
     config = faiss.GpuIndexFlatConfig()
@@ -48,7 +51,8 @@ def get_dominant_colors(image, n_clusters=10, use_gpu=True, plot=True):
 
     if use_gpu:
         centroids = kmeans_faiss(flat_image, n_clusters)
-        labels = compute_cluster_assignment(centroids, flat_image).astype(np.uint8)
+        labels = compute_cluster_assignment(centroids,
+                                            flat_image).astype(np.uint8)
         centroids = centroids.astype(np.uint8)
     else:
         clt = KMeans(n_clusters=n_clusters).fit(flat_image)
@@ -57,8 +61,9 @@ def get_dominant_colors(image, n_clusters=10, use_gpu=True, plot=True):
 
     if plot:
         counts = Counter(labels).most_common()
-        centroid_size_tuples = [(centroids[k], val / len(labels))
-                                for k, val in counts]
+        centroid_size_tuples = [
+            (centroids[k], val / len(labels)) for k, val in counts
+        ]
         bar_image = image_utils.bar_colors(centroid_size_tuples)
         return centroids, labels, bar_image
 
