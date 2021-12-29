@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 import numpy as np
-from time import time
+import argparse
+import os
 
 import dominant_cluster
 import image_utils
@@ -31,8 +32,39 @@ def PBNify(image_path, clusters=20, pre_blur=True):
     return pbn_image, outline_image
 
 
-t0 = time()
-pbn_image, outline_image = PBNify("images/dancing.jpg", clusters=15)
-print("PBNify: ", time() - t0, "secs")
-image_utils.save_image(pbn_image, "images/PBNImage.jpg")
-image_utils.save_image(outline_image, "images/PBNImageOutline.jpg")
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i',
+                        '--input-image',
+                        type=str,
+                        required=True,
+                        help='Path of input image.')
+    parser.add_argument('-o',
+                        '--output-image',
+                        type=str,
+                        required=True,
+                        help='Path of output image.')
+    parser.add_argument(
+        '-k',
+        '--num-of-clusters',
+        type=int,
+        required=False,
+        default=15,
+        help=
+        'Number of kmeans clusters for dominant color calculation. Defaults to 15.'
+    )
+    parser.add_argument('--outline',
+                        action="store_true",
+                        required=False,
+                        default=False,
+                        help='Save outline image containing edges.')
+    FLAGS = parser.parse_args()
+
+    pbn_image, outline_image = PBNify(FLAGS.input_image,
+                                      clusters=FLAGS.num_of_clusters)
+    image_utils.save_image(pbn_image, FLAGS.output_image)
+
+    if FLAGS.outline:
+        outline_image_path = os.path.splitext(
+            FLAGS.output_image)[0] + "_outline.jpg"
+        image_utils.save_image(outline_image, outline_image_path)
