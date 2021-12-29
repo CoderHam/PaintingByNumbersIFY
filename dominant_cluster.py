@@ -1,55 +1,71 @@
+#! /usr/bin/env python3
+import faiss
 from sklearn.cluster import KMeans
-import matplotlib.pyplot as plt
 import numpy as np
-import cv2
+from collections import Counter
 
-def get_dom_colors(image_path,clusters=10,plot=False):
-	image = cv2.imread(image_path)
-	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-	# flatten to 1d
-	image = image.reshape((image.shape[0] * image.shape[1], 3))
-	# cluster the pixel intensities
-	clt = KMeans(n_clusters = clusters)
-	clt.fit(image)
-	hist = centroid_histogram(clt)
-
-	dcolors = [c.astype("uint8").tolist() for c in clt.cluster_centers_]
-	print(dcolors)
-	if plot:
-		bar = plot_colors(hist, clt.cluster_centers_)
-		plt.figure()
-		plt.axis("off")
-		plt.imshow(bar)
-		plt.show()
-
-	return dcolors
+import image_utils
 
 
-def plot_colors(hist, centroids):
+def kmeans_faiss(dataset, k):
+    """
+    Runs KMeans on GPU"
+    """
+    dims = dataset.shape[1]
+    cluster = faiss.Clustering(dims, k)
+    cluster.verbose = False
+    cluster.niter = 20
+    cluster.max_points_per_centroid = 10**7
 
-	bar = np.zeros((50, 300, 3), dtype = "uint8")
-	startX = 0
+    resources = faiss.StandardGpuResources()
+    config = faiss.GpuIndexFlatConfig()
+    config.useFloat16 = False
+    config.device = 0
+    index = faiss.GpuIndexFlatL2(resources, dims, config)
 
-	for (percent, color) in zip(hist, centroids):
-		endX = startX + (percent * 300)
-		cv2.rectangle(bar, (int(startX), 0), (int(endX), 50),
-			color.astype("uint8").tolist(), -1)
-		startX = endX
+    # perform kmeans
+    cluster.train(dataset, index)
+    centroids = faiss.vector_float_to_array(cluster.centroids)
 
-	return bar
+    return centroids.reshape(k, dims)
 
-def centroid_histogram(clt):
-	numLabels = np.arange(0, len(np.unique(clt.labels_)) + 1)
-	(hist, _) = np.histogram(clt.labels_, bins=numLabels)
 
-	hist = hist.astype("float")
-	hist /= hist.sum()
+def compute_cluster_assignment(centroids, data):
+    dims = centroids.shape[1]
 
-	return hist
+    resources = faiss.StandardGpuResources()
+    config = faiss.GpuIndexFlatConfig()
+    config.useFloat16 = False
+    config.device = 0
 
-# bar = plot_colors(hist, clt.cluster_centers_)
+    index = faiss.GpuIndexFlatL2(resources, dims, config)
+    index.add(centroids)
+    _, labels = index.search(data, 1)
 
-# plt.figure()
-# plt.axis("off")
-# plt.imshow(bar)
-# plt.show()
+    return labels.ravel()
+
+
+def get_dominant_colors(image, n_clusters=10, use_gpu=True, plot=True):
+    # Must pass FP32 data to kmeans_faiss since faiss does not support uint8
+    flat_image = image.reshape(
+        (image.shape[0] * image.shape[1], 3)).astype(np.float32)
+
+    if use_gpu:
+        centroids = kmeans_faiss(flat_image, n_clusters)
+        labels = compute_cluster_assignment(centroids,
+                                            flat_image).astype(np.uint8)
+        centroids = centroids.astype(np.uint8)
+    else:
+        clt = KMeans(n_clusters=n_clusters).fit(flat_image)
+        centroids = clt.cluster_centers_.astype(np.uint8)
+        labels = clt.labels_.astype(np.uint8)
+
+    if plot:
+        counts = Counter(labels).most_common()
+        centroid_size_tuples = [
+            (centroids[k], val / len(labels)) for k, val in counts
+        ]
+        bar_image = image_utils.bar_colors(centroid_size_tuples)
+        return centroids, labels, bar_image
+
+    return centroids, labels
